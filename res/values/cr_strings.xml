@@ -17,7 +17,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
     <!-- Application name -->
-    <string name="crdroid_app_name" translatable="false">crDroid Home</string>
+    <string name="crdroid_app_name" translatable="false">Lunaris Launcher</string>
 
     <!-- Folder titles -->
     <string name="google_folder_title" translatable="false">Google</string>
@@ -214,7 +214,7 @@
     <string name="quickspace_psa_title">Random messages</string>
     <string name="quickspace_psa_summary">Make your companion more lively with random messages</string>
 
-    <string-array name="quickspace_psa_morning">
+     <string-array name="quickspace_psa_morning">
         <item>Good morning!</item>
         <item>Good morning, time to rock!</item>
         <item>What a beautiful day!</item>
@@ -282,7 +282,7 @@
     </string-array>
     <string-array name="quickspace_psa_evening">
         <item>Seize the night, for it holds its own mysteries.</item>
-        <item>In the quiet of this evening, find serenity.</item>
+        <item>In the quiet of the this evening, find serenity.</item>
         <item>Life\'s greatest adventures can start in the darkness.</item>
         <item>Your journey continues even after the sun has set.</item>
         <item>Let the night be your canvas; paint it with dreams.</item>
@@ -325,12 +325,12 @@
         <item>Oh hey, what\'s up?</item>
         <item>Welcome to real Matrix!</item>
         <item>How many screenshots do you take?</item>
-        <item>Open goodness with crDroid</item>
+        <item>Open goodness with Lunaris</item>
         <item>Spread love, not havoc</item>
         <item>We didn\'t start the fire!</item>
         <item>Time for some good music</item>
         <item>\u003C\u003C\u003C\u003C\u003C\u003C\u003C HEAD</item>
-        <item>You need crDroid Premium to see this</item>
+        <item>You need Lunaris Premium to see this</item>
         <item>Remember the Lineage of the Unicorn</item>
         <item>Enjoy Xtended battery life</item>
         <item>Starting from the ground zero</item>
