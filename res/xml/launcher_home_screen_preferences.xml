@@ -279,7 +279,6 @@
             android:key="pref_dock_search_widget"
             android:title="@string/dock_search_widget_title"
             android:summary="@string/dock_search_widget_summary"
-            android:dependency="pref_dock_search"
             launcher:iconSpaceReserved="false" />
 
         <SwitchPreferenceCompat

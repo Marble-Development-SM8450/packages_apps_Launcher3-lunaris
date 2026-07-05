@@ -402,7 +402,7 @@ public class SettingsHomescreen extends CollapsingToolbarBaseActivity
             setQsbPrefEnabled(LauncherPrefs.QSB_STYLE_GOOGLE.getSharedPrefKey(),
                     !isCompact && !customWidget);
             setQsbPrefEnabled(LauncherPrefs.DOCK_SEARCH_WIDGET.getSharedPrefKey(),
-                    isDockSearch && !isCompact);
+                    !isCompact);
             setQsbPrefEnabled(LauncherPrefs.COMPACT_SEARCH_BAR_ACTION.getSharedPrefKey(),
                     isDockSearch && isCompact);
             setQsbPrefEnabled(LauncherPrefs.HOTSEAT_QSB_OPACITY.getSharedPrefKey(),
