@@ -110,4 +110,16 @@
         <item>freeform</item>
         <item>split_screen</item>
     </string-array>
+
+    <string-array name="themed_icon_color_preset_entries">
+        <item>@string/themed_icon_color_preset_axicons</item>
+        <item>@string/themed_icon_color_preset_aosp</item>
+        <item>@string/themed_icon_color_preset_custom</item>
+    </string-array>
+
+    <string-array name="themed_icon_color_preset_values">
+        <item>axicons</item>
+        <item>aosp</item>
+        <item>custom</item>
+    </string-array>
 </resources>

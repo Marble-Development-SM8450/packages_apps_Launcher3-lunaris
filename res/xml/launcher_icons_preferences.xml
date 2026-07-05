@@ -54,4 +54,53 @@
         settings:units="%"
         android:defaultValue="100" />
 
+    <PreferenceCategory
+        android:key="pref_themed_icons_category"
+        android:title="@string/themed_icons_category_title">
+
+        <SwitchPreferenceCompat
+            android:key="themed_icons"
+            android:title="@string/themed_icons_title"
+            android:summary="@string/themed_icons_summary"
+            android:defaultValue="false"
+            android:persistent="false"
+            launcher:iconSpaceReserved="false" />
+
+        <com.android.launcher3.settings.preferences.CustomSeekBarPreference
+            android:key="themed_icon_scale"
+            android:title="@string/themed_icon_scale_title"
+            android:dependency="themed_icons"
+            android:persistent="false"
+            android:max="100"
+            settings:min="48"
+            settings:units="%"
+            android:defaultValue="72" />
+
+        <ListPreference
+            android:key="themed_icon_color_preset"
+            android:title="@string/themed_icon_color_preset_title"
+            android:summary="%s"
+            android:entries="@array/themed_icon_color_preset_entries"
+            android:entryValues="@array/themed_icon_color_preset_values"
+            android:defaultValue="axicons"
+            android:dependency="themed_icons"
+            android:persistent="false"
+            launcher:iconSpaceReserved="false" />
+
+        <com.android.launcher3.settings.preferences.ColorPreference
+            android:key="themed_icon_background_color"
+            android:title="@string/themed_icon_background_color_title"
+            android:dependency="themed_icons"
+            android:persistent="false"
+            launcher:iconSpaceReserved="false" />
+
+        <com.android.launcher3.settings.preferences.ColorPreference
+            android:key="themed_icon_foreground_color"
+            android:title="@string/themed_icon_foreground_color_title"
+            android:dependency="themed_icons"
+            android:persistent="false"
+            launcher:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
 </androidx.preference.PreferenceScreen>

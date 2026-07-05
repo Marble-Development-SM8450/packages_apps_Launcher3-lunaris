@@ -619,4 +619,14 @@
     <string name="app_info_custom_icon_title">Custom icon</string>
     <string name="app_info_custom_icon_summary">Pick any icon from any icon pack</string>
     <string name="icon_picker_search_hint">Search icons</string>
+    <string name="themed_icons_category_title">Themed icons style</string>
+    <string name="themed_icons_title">Enable themed icons customization</string>
+    <string name="themed_icons_summary">Allow customize themed icons</string>
+    <string name="themed_icon_scale_title">Icon scale</string>
+    <string name="themed_icon_color_preset_title">Color preset</string>
+    <string name="themed_icon_color_preset_axicons">Legacy</string>
+    <string name="themed_icon_color_preset_aosp">AOSP</string>
+    <string name="themed_icon_color_preset_custom">Custom</string>
+    <string name="themed_icon_background_color_title">Icon background color</string>
+    <string name="themed_icon_foreground_color_title">Icon foreground color</string>
 </resources>

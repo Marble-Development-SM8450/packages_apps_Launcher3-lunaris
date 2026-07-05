@@ -22,6 +22,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.ContentObserver;
+import android.net.Uri;
+import android.os.Handler;
 
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -36,6 +39,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceFragmentCompat.OnPreferenceStartFragmentCallback;
@@ -47,11 +51,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.launcher3.BuildConfig;
 import com.android.launcher3.Flags;
+import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherFiles;
 import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.customization.IconDatabase;
+import com.android.launcher3.icons.ThemedIconSettings;
+import com.android.launcher3.settings.preferences.ColorPreference;
+import com.android.launcher3.settings.preferences.CustomSeekBarPreference;
 import com.android.launcher3.icons.pack.IconPackSettingsActivity;
 import com.android.launcher3.settings.preference.ReloadingListPreference;
 import com.android.launcher3.util.AppReloader;
@@ -78,10 +86,37 @@ public class SettingsIcons extends CollapsingToolbarBaseActivity
     private static final int DELAY_HIGHLIGHT_DURATION_MILLIS = 600;
     public static final String SAVE_HIGHLIGHTED_KEY = "android:preference_highlighted";
 
+    private static final String KEY_THEMED_ICONS = ThemedIconSettings.KEY_THEMED_ICONS;
+    private static final String KEY_THEMED_ICON_SCALE = ThemedIconSettings.KEY_ICON_SCALE;
+    private static final String KEY_THEMED_ICON_COLOR_PRESET = ThemedIconSettings.KEY_COLOR_PRESET;
+    private static final String KEY_THEMED_ICON_BACKGROUND = ThemedIconSettings.KEY_BACKGROUND_COLOR;
+    private static final String KEY_THEMED_ICON_FOREGROUND = ThemedIconSettings.KEY_FOREGROUND_COLOR;
+
+    private ContentObserver mThemedIconSettingsObserver;
+
+    private static final String[] THEMED_ICON_SECURE_KEYS = {
+            ThemedIconSettings.KEY_THEMED_ICONS,
+            ThemedIconSettings.KEY_ICON_SCALE,
+            ThemedIconSettings.KEY_COLOR_PRESET,
+            ThemedIconSettings.KEY_BACKGROUND_COLOR,
+            ThemedIconSettings.KEY_FOREGROUND_COLOR,
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings_activity);
+
+        mThemedIconSettingsObserver = new ContentObserver(new Handler(getMainLooper())) {
+            @Override
+            public void onChange(boolean selfChange, Uri uri) {
+                LauncherAppState.INSTANCE.executeIfCreated(app -> app.setNeedsRestart());
+            }
+        };
+        for (String key : THEMED_ICON_SECURE_KEYS) {
+            getContentResolver().registerContentObserver(
+                    Settings.Secure.getUriFor(key), false, mThemedIconSettingsObserver);
+        }
 
         Intent intent = getIntent();
 
@@ -107,6 +142,12 @@ public class SettingsIcons extends CollapsingToolbarBaseActivity
             // Display the fragment as the main content.
             fm.beginTransaction().replace(com.android.settingslib.collapsingtoolbar.R.id.content_frame, f).commit();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        getContentResolver().unregisterContentObserver(mThemedIconSettingsObserver);
     }
 
     private boolean startPreference(String fragment, Bundle args, String key) {
@@ -163,6 +204,9 @@ public class SettingsIcons extends CollapsingToolbarBaseActivity
 
         private ReloadingListPreference mIconPackPref;
 
+        private ColorPreference mBackgroundColorPref;
+        private ColorPreference mForegroundColorPref;
+
         @Override
         public void onCreate(@Nullable Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -194,12 +238,7 @@ public class SettingsIcons extends CollapsingToolbarBaseActivity
 
         private void updatePreferences() {
             PreferenceScreen screen = getPreferenceScreen();
-            for (int i = screen.getPreferenceCount() - 1; i >= 0; i--) {
-                Preference preference = screen.getPreference(i);
-                if (!initPreference(preference)) {
-                    screen.removePreference(preference);
-                }
-            }
+            initPreferencesRecursively(screen);
 
             // If the target preference is not in the current preference screen, find the parent
             // preference screen that contains the target preference and set it as the preference
@@ -219,6 +258,18 @@ public class SettingsIcons extends CollapsingToolbarBaseActivity
 
             if (getActivity() != null && !TextUtils.isEmpty(getPreferenceScreen().getTitle())) {
                 getActivity().setTitle(getPreferenceScreen().getTitle());
+            }
+        }
+
+        private void initPreferencesRecursively(PreferenceGroup group) {
+            for (int i = group.getPreferenceCount() - 1; i >= 0; i--) {
+                Preference preference = group.getPreference(i);
+                if (preference instanceof PreferenceGroup) {
+                    initPreferencesRecursively((PreferenceGroup) preference);
+                }
+                if (!initPreference(preference)) {
+                    group.removePreference(preference);
+                }
             }
         }
 
@@ -300,6 +351,23 @@ public class SettingsIcons extends CollapsingToolbarBaseActivity
                 case IconDatabase.KEY_ICON_PACK:
                     setupIconPackPreference(preference);
                     return true;
+                case KEY_THEMED_ICONS:
+                    setupThemedIconsSwitch(preference);
+                    return true;
+                case KEY_THEMED_ICON_SCALE:
+                    setupThemedIconScale(preference);
+                    return true;
+                case KEY_THEMED_ICON_COLOR_PRESET:
+                    setupThemedIconColorPreset(preference);
+                    return true;
+                case KEY_THEMED_ICON_BACKGROUND:
+                    mBackgroundColorPref = (ColorPreference) preference;
+                    setupThemedIconColor(preference, true /* background */);
+                    return true;
+                case KEY_THEMED_ICON_FOREGROUND:
+                    mForegroundColorPref = (ColorPreference) preference;
+                    setupThemedIconColor(preference, false /* background */);
+                    return true;
             }
 
             return true;
@@ -369,6 +437,68 @@ public class SettingsIcons extends CollapsingToolbarBaseActivity
             preference.setSummary(pkgLabel);
             preference.setOnPreferenceClickListener(p -> {
                 startActivity(new Intent(getContext(), IconPackSettingsActivity.class));
+                return true;
+            });
+        }
+
+        private void setupThemedIconsSwitch(Preference preference) {
+            ((androidx.preference.TwoStatePreference) preference)
+                    .setChecked(ThemedIconSettings.isThemedIconsEnabled(getContext()));
+            preference.setOnPreferenceChangeListener((p, newValue) -> {
+                Settings.Secure.putInt(getContext().getContentResolver(),
+                        ThemedIconSettings.KEY_THEMED_ICONS, ((Boolean) newValue) ? 1 : 0);
+                return true;
+            });
+        }
+
+        private void setupThemedIconScale(Preference preference) {
+            CustomSeekBarPreference scalePref = (CustomSeekBarPreference) preference;
+            scalePref.setValue(ThemedIconSettings.getIconScale(getContext()));
+            scalePref.setOnPreferenceChangeListener((p, newValue) -> {
+                Settings.Secure.putInt(getContext().getContentResolver(),
+                        ThemedIconSettings.KEY_ICON_SCALE, (Integer) newValue);
+                return true;
+            });
+        }
+
+        private void setupThemedIconColorPreset(Preference preference) {
+            ListPreference presetPref = (ListPreference) preference;
+            String current = ThemedIconSettings.getColorPreset(getContext());
+            presetPref.setValue(current);
+            updateColorPrefsVisibility(current);
+            presetPref.setOnPreferenceChangeListener((p, newValue) -> {
+                String preset = (String) newValue;
+                Settings.Secure.putString(getContext().getContentResolver(),
+                        ThemedIconSettings.KEY_COLOR_PRESET, preset);
+                updateColorPrefsVisibility(preset);
+                return true;
+            });
+        }
+
+        private void updateColorPrefsVisibility(String preset) {
+            boolean showCustomColors = ThemedIconSettings.COLOR_PRESET_CUSTOM.equals(preset);
+            if (mBackgroundColorPref != null) {
+                mBackgroundColorPref.setVisible(showCustomColors);
+            }
+            if (mForegroundColorPref != null) {
+                mForegroundColorPref.setVisible(showCustomColors);
+            }
+        }
+
+        private void setupThemedIconColor(Preference preference, boolean background) {
+            ColorPreference colorPref = (ColorPreference) preference;
+            int current = background
+                    ? ThemedIconSettings.getBackgroundColor(getContext())
+                    : ThemedIconSettings.getForegroundColor(getContext());
+            colorPref.setValue(current);
+            colorPref.setOnPreferenceChangeListener((p, newValue) -> {
+                Settings.Secure.putString(getContext().getContentResolver(),
+                        background ? ThemedIconSettings.KEY_BACKGROUND_COLOR
+                                : ThemedIconSettings.KEY_FOREGROUND_COLOR,
+                        String.valueOf((int) (Integer) newValue));
+                Settings.Secure.putString(getContext().getContentResolver(),
+                        ThemedIconSettings.KEY_COLOR_PRESET,
+                        ThemedIconSettings.COLOR_PRESET_CUSTOM);
                 return true;
             });
         }
