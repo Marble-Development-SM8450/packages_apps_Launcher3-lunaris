@@ -629,4 +629,7 @@
     <string name="themed_icon_color_preset_custom">Custom</string>
     <string name="themed_icon_background_color_title">Icon background color</string>
     <string name="themed_icon_foreground_color_title">Icon foreground color</string>
+
+    <!-- Atmosphere Effects -->
+    <string name="atmosphere_effects_title">Atmosphere Effects</string>
 </resources>

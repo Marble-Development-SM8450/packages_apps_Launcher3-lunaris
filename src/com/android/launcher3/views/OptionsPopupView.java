@@ -24,6 +24,7 @@ import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCH
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_SETTINGS_BUTTON_TAP_OR_LONGPRESS;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_WIDGETSTRAY_BUTTON_TAP_OR_LONGPRESS;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -238,6 +239,11 @@ public class OptionsPopupView<T extends Context & ActivityContext> extends Arrow
                 R.drawable.ic_setting,
                 LAUNCHER_SETTINGS_BUTTON_TAP_OR_LONGPRESS,
                 OptionsPopupView::startSettings));
+        options.add(new OptionItem(launcher,
+                R.string.atmosphere_effects_title,
+                R.drawable.ic_atmosphere,
+                IGNORE,
+                OptionsPopupView::startAtmosphereEffects));
         if (WIDGETS_ENABLED && !LauncherPrefs.WORKSPACE_LOCK.get(launcher)) {
             options.add(new OptionItem(launcher,
                     R.string.widget_button_text,
@@ -295,6 +301,16 @@ public class OptionsPopupView<T extends Context & ActivityContext> extends Arrow
                 .setPackage(launcher.getPackageName())
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
         return true;
+    }
+
+    private static boolean startAtmosphereEffects(View v) {
+        Launcher launcher = Launcher.getLauncher(v.getContext());
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.setComponent(new ComponentName(
+                "com.app.nosatmosphereeffect",
+                "com.app.nosatmosphereeffect.MainActivity"));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return launcher.startActivitySafely(v, intent, placeholderInfo(intent)) != null;
     }
 
     /**
