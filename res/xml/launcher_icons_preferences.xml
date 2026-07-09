@@ -74,7 +74,7 @@
             android:max="100"
             settings:min="48"
             settings:units="%"
-            android:defaultValue="72" />
+            android:defaultValue="100" />
 
         <ListPreference
             android:key="themed_icon_color_preset"
