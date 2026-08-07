@@ -202,7 +202,7 @@ class ScalingWorkspaceRevealAnim(
                 val blurRadius = (maxBlurRadius * blurAnimator.animatedValue as Float).toInt()
                 // Always apply when reaching 0 to ensure final state is clean.
                 if (Math.abs(lastBlurRadius - blurRadius) >= 4 || blurRadius == 0) {
-                    applyBlur(blurRadius.toFloat())
+                    applyBlur(blurRadius.toFloat(), blurAnimator.animatedValue as Float)
                     lastBlurRadius = blurRadius
                 }
             }
@@ -263,7 +263,7 @@ class ScalingWorkspaceRevealAnim(
                 override fun onAnimationCancel(animation: Animator) {
                     super.onAnimationCancel(animation)
                     Log.d(TAG, "onAnimationCancel")
-                    applyBlur(0f)
+                    applyBlur(0f, 0f)
                 }
 
                 override fun onAnimationPause(animation: Animator) {
@@ -360,12 +360,14 @@ class ScalingWorkspaceRevealAnim(
         blurLayer = null
     }
 
-    private fun applyBlur(blurRadius: Float) {
+    private fun applyBlur(blurRadius: Float, alpha: Float) {
         blurLayer?.let {
             if (it.isValid) {
                 // Schedule the blur update.
                 val blurUpdateTransaction = SurfaceTransaction()
-                blurUpdateTransaction.forSurface(it).setBackgroundBlurRadius(blurRadius.toInt())
+                blurUpdateTransaction.forSurface(it)
+                    .setBackgroundBlurRadius(blurRadius.toInt())
+                    .setAlpha(alpha)
                 surfaceTransactionApplier.scheduleApply(blurUpdateTransaction)
             }
         }

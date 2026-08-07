@@ -1914,7 +1914,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                     }
                 }
                 if (scrimLayer != null && scrimLayer.isValid()) {
-                    float t = 1f - percent;
+                    float t = percent;
                     transaction.forSurface(scrimLayer)
                             .setAlpha(peakScrimAlpha * t)
                             .setBackgroundBlurRadius((int) (mMaxBlurRadius * t));
@@ -2663,7 +2663,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 }
             }
             if (mScrimLayer != null && mScrimLayer.isValid()) {
-                float t = 1f - Math.min(progress, 1f);
+                float t = Math.min(progress, 1f);
                 mTransaction.forSurface(mScrimLayer)
                         .setAlpha(mPeakScrimAlpha * t)
                         .setBackgroundBlurRadius((int) (mMaxBlurRadius * t));
