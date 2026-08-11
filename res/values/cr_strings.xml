@@ -600,8 +600,8 @@
     <string name="swipe_down_to_lock_summary">Swipe down on a recent task card to lock or unlock it from being cleared</string>
 
     <!-- App launch blur -->
-    <string name="pref_app_launch_blur_title">App launch blur</string>
-    <string name="pref_app_launch_blur_summary">Show blur effect when launching apps</string>
+    <string name="pref_app_launch_blur_title">App launch/close blur</string>
+    <string name="pref_app_launch_blur_summary">Show blur effect when launching or closing apps</string>
 
     <!-- Rename app shortcut -->
     <string name="rename_app_label">Rename</string>
