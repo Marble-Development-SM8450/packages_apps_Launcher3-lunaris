@@ -140,6 +140,10 @@ public class QuickSpaceView extends FrameLayout implements OnDataListener {
 
         mQuickspaceDayOfWeek.setText(QuickEventsController.getDayOfWeek(getContext()));
         mQuickspaceDate.setText(QuickEventsController.getShortDate(getContext()));
+
+        if (mQuickspaceClockHour != null) {
+            mQuickspaceClockHour.setTextColor(getClockHourColor());
+        }
         
         if (mWeatherContentSub != null) {
             mWeatherContentSub.setVisibility(View.VISIBLE);
@@ -171,6 +175,13 @@ public class QuickSpaceView extends FrameLayout implements OnDataListener {
                 if (mContextualInfoRow != null) mContextualInfoRow.setVisibility(View.GONE);
             }
         }
+    }
+
+    private int getClockHourColor() {
+        if (LauncherPrefs.QUICKSPACE_CLOCK_CUSTOM_COLOR.get(getContext())) {
+            return LauncherPrefs.QUICKSPACE_CLOCK_COLOR.get(getContext());
+        }
+        return getContext().getColor(R.color.quickspace_clock_hour_color);
     }
 
     private final void loadDoubleLine(boolean useAlternativeQuickspaceUI) {

@@ -261,6 +261,11 @@
         <item>2</item>
     </string-array>
 
+    <!-- Quickspace OOS clock color -->
+    <string name="quickspace_clock_custom_color_title">Custom clock color</string>
+    <string name="quickspace_clock_custom_color_summary">Use your own color for the hour digits</string>
+    <string name="quickspace_clock_color_title">Clock color</string>
+
     <!-- Quickspace PSA - Custom messages for the glance -->
     <string name="quickspace_psa_title">Random messages</string>
     <string name="quickspace_psa_summary">Make your companion more lively with random messages</string>

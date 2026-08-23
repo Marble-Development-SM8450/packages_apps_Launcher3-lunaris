@@ -46,4 +46,7 @@
 
     <!-- Dark app drawer text -->
     <color name="all_apps_label_color_dark_forced">#FF212121</color>
+
+    <!-- Quickspace OOS clock style, hour digits -->
+    <color name="quickspace_clock_hour_color">#FFFE4543</color>
 </resources>

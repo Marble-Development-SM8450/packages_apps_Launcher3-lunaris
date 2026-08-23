@@ -35,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/SlateForOnePlus-Bold"
-            android:textColor="#FE4543"
+            android:textColor="@color/quickspace_clock_hour_color"
             android:textSize="80sp"
             android:format12Hour="h"
             android:format24Hour="H"

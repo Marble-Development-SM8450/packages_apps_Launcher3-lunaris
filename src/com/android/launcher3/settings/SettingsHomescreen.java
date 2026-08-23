@@ -279,6 +279,7 @@ public class SettingsHomescreen extends CollapsingToolbarBaseActivity
             }
 
             updateQsbStylePrefs();
+            updateQuickspaceClockColorPrefs();
 
             getPreferenceManager().getSharedPreferences()
                     .registerOnSharedPreferenceChangeListener(this);
@@ -369,6 +370,7 @@ public class SettingsHomescreen extends CollapsingToolbarBaseActivity
                 recreateActivityNow();
             }
             updateQsbStylePrefs();
+            updateQuickspaceClockColorPrefs();
             LauncherPrefs.getPrefs(getContext())
                     .registerOnSharedPreferenceChangeListener(mPrefListener);
         }
@@ -387,6 +389,9 @@ public class SettingsHomescreen extends CollapsingToolbarBaseActivity
                             || LauncherPrefs.QSB_STYLE_GOOGLE.getSharedPrefKey().equals(key)
                             || LauncherPrefs.COMPACT_SEARCH_BAR.getSharedPrefKey().equals(key)) {
                         updateQsbStylePrefs();
+                    }
+                    if (LauncherPrefs.QUICKSPACE_UI_STYLE.getSharedPrefKey().equals(key)) {
+                        updateQuickspaceClockColorPrefs();
                     }
                 };
 
@@ -417,6 +422,32 @@ public class SettingsHomescreen extends CollapsingToolbarBaseActivity
             Preference pref = findPreference(key);
             if (pref != null) {
                 pref.setEnabled(enabled);
+            }
+        }
+
+        private void updateQuickspaceClockColorPrefs() {
+            if (getContext() == null) {
+                return;
+            }
+            int style;
+            try {
+                style = Integer.parseInt(
+                        LauncherPrefs.get(getContext()).get(LauncherPrefs.QUICKSPACE_UI_STYLE));
+            } catch (NumberFormatException e) {
+                style = LauncherPrefs.get(getContext()).get(LauncherPrefs.SHOW_QUICKSPACE_ALT)
+                        ? 1 : 0;
+            }
+            boolean isOosClock = style == 2;
+            setQuickspacePrefVisible(
+                    LauncherPrefs.QUICKSPACE_CLOCK_CUSTOM_COLOR.getSharedPrefKey(), isOosClock);
+            setQuickspacePrefVisible(
+                    LauncherPrefs.QUICKSPACE_CLOCK_COLOR.getSharedPrefKey(), isOosClock);
+        }
+
+        private void setQuickspacePrefVisible(String key, boolean visible) {
+            Preference pref = findPreference(key);
+            if (pref != null) {
+                pref.setVisible(visible);
             }
         }
 
