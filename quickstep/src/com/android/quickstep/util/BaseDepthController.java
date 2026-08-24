@@ -455,6 +455,7 @@ public class BaseDepthController {
      * The blur percentage grows linearly with depth, and maxes out at 30% depth.
      */
     private static float mapDepthToBlur(float depth) {
-        return Interpolators.clampToProgress(depth, 0, 0.3f);
+        return Interpolators.STANDARD.getInterpolation(
+                Interpolators.clampToProgress(depth, 0, 0.4f));
     }
 }

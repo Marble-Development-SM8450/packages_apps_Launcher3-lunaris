@@ -66,13 +66,13 @@ class ScalingWorkspaceRevealAnim(
     playBlur: Boolean = true,
 ) {
     companion object {
-        private const val FADE_DURATION_MS = 200L
-        private const val SCALE_DURATION_MS = 1000L
-        private const val HOTSEAT_FADE_DELAY_MS = 30L
+        private const val FADE_DURATION_MS = 150L
+        private const val SCALE_DURATION_MS = 650L
+        private const val HOTSEAT_FADE_DELAY_MS = 25L
         private const val MAX_ALPHA = 1f
         private const val MIN_ALPHA = 0f
         internal const val MAX_SIZE = 1f
-        internal const val MIN_SIZE = 0.85f
+        internal const val MIN_SIZE = 0.90f
 
         /**
          * Custom interpolator for both the home and wallpaper scaling. Necessary because EMPHASIZED
@@ -88,7 +88,7 @@ class ScalingWorkspaceRevealAnim(
                 }
             )
 
-        val BLUR_INTERPOLATOR = Interpolators.clampToProgress(EMPHASIZED, 0f, 0.666f)
+        val BLUR_INTERPOLATOR = Interpolators.clampToProgress(EMPHASIZED, 0f, 0.6f)
     }
 
     private val animation = PendingAnimation(SCALE_DURATION_MS)

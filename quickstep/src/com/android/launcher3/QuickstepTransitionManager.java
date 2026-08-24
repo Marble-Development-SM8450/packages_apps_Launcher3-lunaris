@@ -85,6 +85,7 @@ import android.content.ComponentName;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -115,7 +116,6 @@ import android.view.View;
 import android.view.ViewRootImpl;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.view.animation.PathInterpolator;
 import android.window.DesktopModeFlags;
@@ -142,6 +142,7 @@ import com.android.launcher3.dragndrop.DragLayer;
 import com.android.launcher3.icons.FastBitmapDrawable;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.shortcuts.DeepShortcutView;
+import com.android.launcher3.statehandlers.DepthController;
 import com.android.launcher3.taskbar.TaskbarInteractor;
 import com.android.launcher3.taskbar.customization.TaskbarFeatureEvaluator;
 import com.android.launcher3.testing.shared.ResourceUtils;
@@ -212,10 +213,10 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
      */
     public static final int STATUS_BAR_TRANSITION_PRE_DELAY = 96;
 
-    public static final long APP_LAUNCH_DURATION = 500;
+    public static final long APP_LAUNCH_DURATION = 440;
 
-    private static final long APP_LAUNCH_ALPHA_DURATION = 125;
-    private static final long APP_LAUNCH_ALPHA_START_DELAY = 25;
+    private static final long APP_LAUNCH_ALPHA_DURATION = 138;
+    private static final long APP_LAUNCH_ALPHA_START_DELAY = 33;
 
     public static final int ANIMATION_NAV_FADE_IN_DURATION = 266;
     public static final int ANIMATION_NAV_FADE_OUT_DURATION = 160;
@@ -228,7 +229,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
 
     public static final int RECENTS_LAUNCH_DURATION = 336;
     private static final int LAUNCHER_RESUME_START_DELAY = 100;
-    private static final int CLOSING_TRANSITION_DURATION_MS = 280;
+    private static final int CLOSING_TRANSITION_DURATION_MS = 330;
     public static final int SPLIT_LAUNCH_DURATION = 370;
     public static final int SPLIT_DIVIDER_ANIM_DURATION = 100;
 
@@ -239,8 +240,52 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
     // TODO(b/236145847): Tune TASKBAR_TO_HOME_DURATION to 383 after conflict with unlock animation
     // is solved.
     private static final int TASKBAR_TO_HOME_DURATION_FAST = 300;
-    private static final int TASKBAR_TO_HOME_DURATION_SLOW = 1000;
+    private static final int TASKBAR_TO_HOME_DURATION_SLOW = 650;
     protected static final int CONTENT_SCALE_DURATION = 350;
+
+    private static final Interpolator APP_LAUNCH_INTERPOLATOR;
+    private static final Interpolator APP_LAUNCH_X_INTERPOLATOR;
+    private static final Interpolator WORKSPACE_PUSHBACK_INTERPOLATOR;
+
+    static {
+        Path launchPath = new Path();
+        launchPath.moveTo(0f, 0f);
+        launchPath.cubicTo(0.045f, 0.022f, 0.1f, 0.17f, 0.18f, 0.4f);
+        launchPath.cubicTo(0.3f, 0.78f, 0.5f, 0.965f, 1f, 1f);
+        APP_LAUNCH_INTERPOLATOR = new PathInterpolator(launchPath);
+
+        Path launchXPath = new Path();
+        launchXPath.moveTo(0f, 0f);
+        launchXPath.cubicTo(0.045f, 0.06f, 0.1f, 0.34f, 0.18f, 0.62f);
+        launchXPath.cubicTo(0.3f, 0.9f, 0.5f, 0.99f, 1f, 1f);
+        APP_LAUNCH_X_INTERPOLATOR = new PathInterpolator(launchXPath);
+
+        Path pushbackPath = new Path();
+        pushbackPath.moveTo(0f, 0f);
+        pushbackPath.cubicTo(0.07f, 0.025f, 0.14f, 0.14f, 0.25f, 0.38f);
+        pushbackPath.cubicTo(0.4f, 0.7f, 0.56f, 0.92f, 1f, 1f);
+        WORKSPACE_PUSHBACK_INTERPOLATOR = new PathInterpolator(pushbackPath);
+    }
+
+    private static final int WORKSPACE_PUSHBACK_DURATION = (int) APP_LAUNCH_DURATION;
+
+    private static final float WORKSPACE_PUSHBACK_SCALE = ScalingWorkspaceRevealAnim.MIN_SIZE;
+
+    private static final float WORKSPACE_PUSHBACK_ALPHA = 0.85f;
+
+    private static final Interpolator WORKSPACE_PUSHBACK_ALPHA_INTERPOLATOR =
+            Interpolators.clampToProgress(WORKSPACE_PUSHBACK_INTERPOLATOR, 0.1f, 0.85f);
+
+    private static final Interpolator APP_LAUNCH_BLUR_INTERPOLATOR =
+            Interpolators.clampToProgress(WORKSPACE_PUSHBACK_INTERPOLATOR, 0f, 0.75f);
+
+    private static final Interpolator APP_LAUNCH_SCRIM_INTERPOLATOR =
+            Interpolators.clampToProgress(WORKSPACE_PUSHBACK_INTERPOLATOR, 0.08f, 0.9f);
+
+    private static final Interpolator APP_LAUNCH_DEPTH_INTERPOLATOR =
+            Interpolators.clampToProgress(WORKSPACE_PUSHBACK_INTERPOLATOR, 0f, 0.85f);
+
+    private static final int MIN_BLUR_RADIUS_DELTA_PX = 2;
 
     private static final int MAX_NUM_TASKS = 5;
 
@@ -331,10 +376,8 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
             mSystemUiProxy.setStartingWindowListener(mStartingWindowListener);
         }
 
-        mOpeningXInterpolator = AnimationUtils.loadInterpolator(
-                launcher, R.interpolator.app_open_x);
-        mOpeningInterpolator = AnimationUtils.loadInterpolator(
-                launcher, R.interpolator.emphasized_interpolator);
+        mOpeningXInterpolator = APP_LAUNCH_X_INTERPOLATOR;
+        mOpeningInterpolator = APP_LAUNCH_INTERPOLATOR;
         mCoordinateTransfer = new RemoteAnimationCoordinateTransfer(mLauncher);
         mLatencyTracker = LatencyTracker.getInstance(launcher);
 
@@ -706,6 +749,9 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 viewsToAnimate.add(hotseat);
             }
 
+            final float pushbackScale = isAppOpening ? WORKSPACE_PUSHBACK_SCALE : 1f;
+            final float pushbackAlpha = isAppOpening ? WORKSPACE_PUSHBACK_ALPHA : 1f;
+
             viewsToAnimate.forEach(view -> {
                 view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
@@ -714,7 +760,8 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 // TODO(b/367591368): ideally these animations would be refactored to be
                 //  controlled centrally so each instances doesn't need to care about this
                 //  coordination.
-                float[] scale = new float[]{view.getScaleX(), scales[1]};
+                float[] scale = new float[]{view.getScaleX(), pushbackScale};
+                float[] alpha = new float[]{view.getAlpha(), pushbackAlpha};
 
                 // Cancel any ongoing animations. This is necessary to avoid a conflict between
                 // e.g. the unfinished animation triggered when closing an app back to Home and
@@ -724,14 +771,20 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 Animations.Companion.setOngoingAnimation(view, launcherAnimator);
 
                 ObjectAnimator scaleAnim = ObjectAnimator.ofFloat(view, SCALE_PROPERTY, scale)
-                        .setDuration(CONTENT_SCALE_DURATION);
-                scaleAnim.setInterpolator(DECELERATE_1_5);
+                        .setDuration(WORKSPACE_PUSHBACK_DURATION);
+                scaleAnim.setInterpolator(WORKSPACE_PUSHBACK_INTERPOLATOR);
                 launcherAnimator.play(scaleAnim);
+
+                ObjectAnimator alphaAnim = ObjectAnimator.ofFloat(view, View.ALPHA, alpha)
+                        .setDuration(WORKSPACE_PUSHBACK_DURATION);
+                alphaAnim.setInterpolator(WORKSPACE_PUSHBACK_ALPHA_INTERPOLATOR);
+                launcherAnimator.play(alphaAnim);
             });
 
             endListener = () -> {
                 viewsToAnimate.forEach(view -> {
                     SCALE_PROPERTY.set(view, 1f);
+                    view.setAlpha(1f);
                     view.setLayerType(View.LAYER_TYPE_NONE, null);
 
                     // Reset the cached animation.
@@ -952,8 +1005,12 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                     NAV_FADE_IN_INTERPOLATOR, ANIMATION_DELAY_NAV_FADE_IN,
                     ANIMATION_NAV_FADE_IN_DURATION, APP_LAUNCH_DURATION));
 
-            FloatProp mBlurRadius = new FloatProp(0f, mMaxBlurRadius, DECELERATE_1_5);
-            FloatProp mBlurScrimAlpha = new FloatProp(0f, scrimAlpha, DECELERATE_1_5);
+            FloatProp mBlurRadius = new FloatProp(0f, mMaxBlurRadius,
+                    APP_LAUNCH_BLUR_INTERPOLATOR);
+            FloatProp mBlurScrimAlpha = new FloatProp(0f, scrimAlpha,
+                    APP_LAUNCH_SCRIM_INTERPOLATOR);
+
+            int mLastBlurRadius = -1;
 
             @Override
             public void onUpdate(float percent, boolean initOnly) {
@@ -1106,7 +1163,12 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 if (appLaunchBlur() && isAppLaunchBlurEnabled() && scrimLayer != null && scrimLayer.isValid()) {
                     SurfaceProperties builder = transaction.forSurface(scrimLayer);
                     builder.setAlpha(mBlurScrimAlpha.value);
-                    builder.setBackgroundBlurRadius((int) mBlurRadius.value);
+                    int blurRadius = (int) mBlurRadius.value;
+                    if (Math.abs(blurRadius - mLastBlurRadius) >= MIN_BLUR_RADIUS_DELTA_PX
+                            || blurRadius >= mMaxBlurRadius) {
+                        builder.setBackgroundBlurRadius(blurRadius);
+                        mLastBlurRadius = blurRadius;
+                    }
                 }
 
                 surfaceApplier.scheduleApply(transaction);
@@ -1220,6 +1282,13 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                     NAV_FADE_IN_INTERPOLATOR, ANIMATION_DELAY_NAV_FADE_IN,
                     ANIMATION_NAV_FADE_IN_DURATION, APP_LAUNCH_DURATION));
 
+            final FloatProp mBlurRadius = new FloatProp(0f, mMaxBlurRadius,
+                    APP_LAUNCH_BLUR_INTERPOLATOR);
+            final FloatProp mBlurScrimAlpha = new FloatProp(0f, scrimAlpha,
+                    APP_LAUNCH_SCRIM_INTERPOLATOR);
+
+            int mLastBlurRadius = -1;
+
             @Override
             public void onUpdate(float percent, boolean initOnly) {
                 widgetBackgroundBounds.set(mDx.value - mWidth.value / 2f,
@@ -1264,8 +1333,13 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
 
                 if (appLaunchBlur() && isAppLaunchBlurEnabled() && scrimLayer != null && scrimLayer.isValid()) {
                     SurfaceProperties builder = transaction.forSurface(scrimLayer);
-                    builder.setAlpha(percent * scrimAlpha);
-                    builder.setBackgroundBlurRadius((int) (percent * mMaxBlurRadius));
+                    builder.setAlpha(mBlurScrimAlpha.value);
+                    int blurRadius = (int) mBlurRadius.value;
+                    if (Math.abs(blurRadius - mLastBlurRadius) >= MIN_BLUR_RADIUS_DELTA_PX
+                            || blurRadius >= mMaxBlurRadius) {
+                        builder.setBackgroundBlurRadius(blurRadius);
+                        mLastBlurRadius = blurRadius;
+                    }
                 }
 
                 surfaceApplier.scheduleApply(transaction);
@@ -1355,7 +1429,8 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
 
     /** Returns animator that controls depth/blur of the background during app/widget opening. */
     private Animator getBackgroundAnimator() {
-        if (Flags.allAppsBlur()) {
+        boolean scrimHandlesBlur = appLaunchBlur() && isAppLaunchBlurEnabled();
+        if (Flags.allAppsBlur() && !scrimHandlesBlur) {
             // Don't animate/blur the background for this launch, regardless of the launcher state.
             // We have too many performance issues with the blur.
             return new AnimatorSet();
@@ -1367,10 +1442,26 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
         boolean allowBlurringLauncher =
                 launcherState != OVERVIEW && BlurUtils.supportsBlursOnWindows();
 
+        DepthController depthController = mLauncher.getDepthController();
         ObjectAnimator backgroundRadiusAnim = ObjectAnimator.ofFloat(
-                        mLauncher.getDepthController().stateDepth, MULTI_PROPERTY_VALUE,
+                        depthController.stateDepth, MULTI_PROPERTY_VALUE,
                         BACKGROUND_APP.getDepth(mLauncher))
                 .setDuration(APP_LAUNCH_DURATION);
+        backgroundRadiusAnim.setInterpolator(APP_LAUNCH_DEPTH_INTERPOLATOR);
+
+        if (scrimHandlesBlur) {
+            backgroundRadiusAnim.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+                    depthController.pauseBlursOnWindows(true);
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    depthController.pauseBlursOnWindows(false);
+                }
+            });
+        }
 
         if (allowBlurringLauncher) {
             // Create a temporary effect layer, that lives on top of launcher, so we can apply
@@ -1807,10 +1898,10 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
         float translateY = isFreeform
             ? mClosingFreeformWindowTransY
             : mClosingWindowTransY * 1.0f;
-        float endScale = isFreeform ? 0.95f : 0.97f;
+        float endScale = isFreeform ? 0.95f : 0.94f;
         Interpolator alphaInterpolator = isFreeform
                 ? clampToDuration(LINEAR, 0, 100, duration)
-                : clampToDuration(LINEAR, 25, 125, duration);
+                : clampToDuration(LINEAR, 40, 210, duration);
         closingAnimator.addUpdateListener(new MultiValueUpdateListener() {
             FloatProp mDy = new FloatProp(0, translateY, DECELERATE_1_7);
             FloatProp mScale = new FloatProp(1f, endScale, DECELERATE_1_7);
