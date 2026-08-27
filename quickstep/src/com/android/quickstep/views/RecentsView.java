@@ -5230,12 +5230,6 @@ public abstract class RecentsView<
                                 .taskPrimaryTranslation.value = totalTranslationX);
                 redrawLiveTile();
             }
-            if (mEnableDrawingLiveTile && i == getRunningTaskIndex() && !mEnableOverlap) {
-                runActionOnRemoteHandles(
-                        remoteTargetHandle -> remoteTargetHandle.getTaskViewSimulator()
-                                .taskPrimaryTranslation.value = totalTranslationX);
-                redrawLiveTile();
-            }
 
             if (showAsGrid && enableGridOnlyOverview() && child instanceof TaskView taskView) {
                 float totalTranslationY = getVerticalOffsetSize(taskView, modalOffset);
