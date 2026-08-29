@@ -52,6 +52,12 @@
         android:key="pref_trust_apps"
         android:title="@string/trust_apps_manager_name" />
 
+    <Preference
+        android:key="pref_overscroll_settings"
+        android:title="@string/overscroll_settings_title"
+        android:summary="@string/overscroll_settings_summary"
+        launcher:iconSpaceReserved="false" />
+
     <androidx.preference.PreferenceScreen
         android:persistent="false"
         android:title="@string/suggestion_pref_screen_title"

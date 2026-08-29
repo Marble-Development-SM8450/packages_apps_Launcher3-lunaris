@@ -229,6 +229,14 @@ public class SettingsMisc extends CollapsingToolbarBaseActivity
                 }
             }
 
+            Preference overscrollPref = screen.findPreference("pref_overscroll_settings");
+            if (overscrollPref != null) {
+                overscrollPref.setOnPreferenceClickListener(preference -> {
+                    startActivity(new Intent(getActivity(), SettingsOverscroll.class));
+                    return true;
+                });
+            }
+
             // If the target preference is not in the current preference screen, find the parent
             // preference screen that contains the target preference and set it as the preference
             // screen.
