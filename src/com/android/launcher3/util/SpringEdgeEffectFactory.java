@@ -48,7 +48,6 @@ public class SpringEdgeEffectFactory extends RecyclerView.EdgeEffectFactory {
         private final float mVelocityScale;
         private final float mSign;
         private float mPullDistance = 0f;
-        private boolean mWasDisplaced = false;
 
         SpringEdgeEffect(RecyclerView recyclerView, int direction) {
             super(recyclerView.getContext());
@@ -69,12 +68,6 @@ public class SpringEdgeEffectFactory extends RecyclerView.EdgeEffectFactory {
             mSpringAnimation.setSpring(new SpringForce(0f)
                     .setStiffness(stiffness)
                     .setDampingRatio(dampingRatio));
-            mSpringAnimation.addEndListener((animation, canceled, value, velocity) -> {
-                if (!canceled && mWasDisplaced) {
-                    mWasDisplaced = false;
-                    mRecyclerView.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
-                }
-            });
         }
 
         @Override
@@ -104,14 +97,14 @@ public class SpringEdgeEffectFactory extends RecyclerView.EdgeEffectFactory {
         public void onRelease() {
             if (mPullDistance != 0f) {
                 mPullDistance = 0f;
-                mWasDisplaced = true;
+                mRecyclerView.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
                 mSpringAnimation.animateToFinalPosition(0f);
             }
         }
 
         @Override
         public void onAbsorb(int velocity) {
-            mWasDisplaced = true;
+            mRecyclerView.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
             mSpringAnimation.setStartVelocity(mSign * velocity * mVelocityScale);
             mSpringAnimation.animateToFinalPosition(0f);
         }
