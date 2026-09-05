@@ -88,6 +88,16 @@ class ItemInflater<T>(
                     )
                     .apply { onFocusChangeListener = focusListener }
 
+            // Same inflate path as ITEM_TYPE_FOLDER — FolderIcon branches internally on itemType.
+            Favorites.ITEM_TYPE_FOLDER_WIDGET ->
+                FolderIcon.inflateFolderAndIcon(
+                        R.layout.folder_icon,
+                        context,
+                        parent,
+                        item as FolderInfo,
+                    )
+                    .apply { onFocusChangeListener = focusListener }
+
             Favorites.ITEM_TYPE_APP_PAIR ->
                 AppPairIcon.inflateIcon(
                     R.layout.app_pair_icon,

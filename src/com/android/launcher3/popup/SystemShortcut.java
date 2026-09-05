@@ -63,6 +63,7 @@ import com.android.launcher3.customization.InfoBottomSheet;
 import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.ItemInfoWithIcon;
+import com.android.launcher3.model.data.FolderInfo;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.util.ActivityOptionsWrapper;
@@ -327,6 +328,30 @@ public abstract class SystemShortcut<T extends ActivityContext> extends ItemInfo
                     ActivityContext.lookupContext(view.getContext()).getDropTargetHandler();
             dropTargetHandler.prepareToUndoDelete();
             dropTargetHandler.onDeleteComplete(mItemInfo, mOriginalView);
+        }
+    }
+
+    /** Converts a closed folder into the always-open, live-resizable folder widget. */
+    public static final Factory<ActivityContext> MAKE_FOLDER_WIDGET =
+            (context, itemInfo, originalView) -> {
+                if (!(itemInfo instanceof FolderInfo)) return null;
+                if (itemInfo.itemType != LauncherSettings.Favorites.ITEM_TYPE_FOLDER) return null;
+                return new MakeFolderWidget<>(context, itemInfo, originalView);
+            };
+
+    public static class MakeFolderWidget<T extends ActivityContext> extends SystemShortcut<T> {
+
+        public MakeFolderWidget(T target, ItemInfo itemInfo, @NonNull View originalView) {
+            super(R.drawable.ic_widget, R.string.make_folder_widget, target, itemInfo,
+                    originalView, false);
+        }
+
+        @Override
+        public void onClick(View view) {
+            AbstractFloatingView.closeAllOpenViewsExcept(mTarget, TYPE_FOLDER);
+            if (mTarget instanceof Launcher launcher && mItemInfo instanceof FolderInfo folderInfo) {
+                launcher.convertFolderToWidget(folderInfo, mOriginalView);
+            }
         }
     }
 

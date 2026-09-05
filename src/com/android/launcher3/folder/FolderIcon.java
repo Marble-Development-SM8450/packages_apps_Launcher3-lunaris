@@ -123,6 +123,10 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
 
     FolderGridOrganizer mPreviewVerifier;
     final ClippedFolderIconLayoutRule mPreviewLayoutRule;
+
+    private boolean mIsWidgetMode = false;
+    @Nullable private FolderGridView mFolderGridView;
+    @Nullable private FolderResizeFrame mResizeFrame;
     private final PreviewItemManager mPreviewItemManager;
     private PreviewItemDrawingParams mTmpParams = new PreviewItemDrawingParams(0, 0, 0);
     private final List<ItemInfo> mCurrentPreviewItems = new ArrayList<>();
@@ -246,11 +250,41 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
 
         icon.setAccessibilityDelegate(activity.getAccessibilityDelegate());
 
-        icon.mPreviewVerifier = createFolderGridOrganizer(activity.getDeviceProfile());
-        icon.mPreviewVerifier.setFolderInfo(folderInfo);
-        icon.updatePreviewItems(false);
+        icon.mIsWidgetMode = folderInfo.itemType
+                == com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_FOLDER_WIDGET;
+
+        if (icon.mIsWidgetMode) {
+            ResizableFolderGridOrganizer resizableOrganizer = ResizableFolderGridOrganizer
+                    .createForWidgetSpan(folderInfo.spanX, folderInfo.spanY,
+                            grid.getFolderProfile().getNumColumns(),
+                            grid.getFolderProfile().getNumRows());
+            icon.mPreviewVerifier = resizableOrganizer;
+
+            icon.mFolderGridView = (FolderGridView) inflater.inflate(
+                    R.layout.folder_widget_grid, icon, false);
+            icon.addView(icon.mFolderGridView);
+            icon.mFolderGridView.onLiveGridSizeChanged(folderInfo.spanX, folderInfo.spanY);
+            icon.setIconVisible(false);
+        } else {
+            icon.mPreviewVerifier = createFolderGridOrganizer(activity.getDeviceProfile());
+            icon.mPreviewVerifier.setFolderInfo(folderInfo);
+            icon.updatePreviewItems(false);
+        }
 
         return icon;
+    }
+
+    private boolean showResizeFrameIfWidgetMode() {
+        if (!mIsWidgetMode || mFolderGridView == null) return false;
+        if (mResizeFrame == null) {
+            mResizeFrame = (FolderResizeFrame) LayoutInflater.from(getContext())
+                    .inflate(R.layout.folder_resize_frame, mActivity.getDragLayer(), false);
+            mActivity.getDragLayer().addView(mResizeFrame);
+        }
+        CellLayoutLayoutParams lp = (CellLayoutLayoutParams) getLayoutParams();
+        mResizeFrame.attachTo(new FolderIconResizeHost(this, lp));
+        mResizeFrame.setVisibility(VISIBLE);
+        return true;
     }
 
     public void animateBgShadowAndStroke() {
@@ -279,6 +313,10 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
 
     private void setFolder(Folder folder) {
         mFolder = folder;
+        if (mIsWidgetMode && mFolderGridView != null) {
+            mFolderGridView.setFolder(folder);
+            mFolderGridView.bindItems(new ArrayList<>(mInfo.getContents()));
+        }
     }
 
     private boolean willAcceptItem(ItemInfo item) {
@@ -740,6 +778,14 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
         return true;
     }
 
+    @Override
+    public boolean performLongClick() {
+        if (mIsWidgetMode && showResizeFrameIfWidgetMode()) {
+            return true;
+        }
+        return super.performLongClick();
+    }
+
     /**
      * Returns true if the touch down at the provided position be ignored
      */
@@ -855,5 +901,45 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
          * Tells the FolderIconParent to stop drawing the "leave-behind" as the Folder is closed.
          */
         void clearFolderLeaveBehind(FolderIcon child);
+    }
+
+    private static final class FolderIconResizeHost implements ResizableGridHost {
+        private final FolderIcon mIcon;
+        private final CellLayoutLayoutParams mLp;
+
+        FolderIconResizeHost(FolderIcon icon, CellLayoutLayoutParams lp) {
+            mIcon = icon;
+            mLp = lp;
+        }
+
+        @Override public CellLayout getCellLayout() {
+            return (CellLayout) mIcon.getParent().getParent(); // Workspace CellLayout page
+        }
+
+        @Override public CellLayoutLayoutParams getLayoutParamsForResize() {
+            return mLp;
+        }
+
+        @Override public int getMinHSpan() { return 1; }
+        @Override public int getMinVSpan() { return 1; }
+        @Override public int getMaxHSpan() {
+            return mIcon.mActivity.getDeviceProfile().getFolderProfile().getNumColumns();
+        }
+        @Override public int getMaxVSpan() {
+            return mIcon.mActivity.getDeviceProfile().getFolderProfile().getNumRows();
+        }
+
+        @Override public void onLiveSpanChanged(int spanX, int spanY) {
+            if (mIcon.mFolderGridView != null) {
+                mIcon.mFolderGridView.onLiveGridSizeChanged(spanX, spanY);
+            }
+        }
+
+        @Override public void onSpanCommitted(int spanX, int spanY) {
+            onLiveSpanChanged(spanX, spanY);
+            mIcon.mInfo.spanX = spanX;
+            mIcon.mInfo.spanY = spanY;
+            mIcon.mActivity.getModelWriter().updateItemInDatabase(mIcon.mInfo);
+        }
     }
 }

@@ -172,6 +172,9 @@ public class LauncherSettings {
          */
         public static final int ITEM_TYPE_SYSTEM_DRAG = 15;
 
+        /** An always-open folder rendered inline on the workspace as a live, resizable grid. */
+        public static final int ITEM_TYPE_FOLDER_WIDGET = 16;
+
         /**
          * The custom icon bitmap.
          * <P>Type: BLOB</P>
@@ -244,6 +247,7 @@ public class LauncherSettings {
                 case ITEM_TYPE_PRIVATE_SPACE_INSTALL_APP_BUTTON:
                     return "PRIVATE_SPACE_INSTALL_APP_BUTTON";
                 case ITEM_TYPE_SYSTEM_DRAG: return "SYSTEM_DRAG";
+                case ITEM_TYPE_FOLDER_WIDGET: return "FOLDER_WIDGET";
                 default: return String.valueOf(type);
             }
         }

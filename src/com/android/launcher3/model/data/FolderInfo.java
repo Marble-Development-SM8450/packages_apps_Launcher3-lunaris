@@ -95,6 +95,16 @@ public class FolderInfo extends CollectionInfo {
         itemType = LauncherSettings.Favorites.ITEM_TYPE_FOLDER;
     }
 
+    /** Creates a FolderInfo for the always-open, live-resizable folder widget mode. */
+    @NonNull
+    public static FolderInfo createFolderWidget(int initialSpanX, int initialSpanY) {
+        FolderInfo info = new FolderInfo();
+        info.itemType = LauncherSettings.Favorites.ITEM_TYPE_FOLDER_WIDGET;
+        info.spanX = Math.max(1, initialSpanX);
+        info.spanY = Math.max(1, initialSpanY);
+        return info;
+    }
+
     @Override
     public void add(@NonNull ItemInfo item) {
         if (!willAcceptItemType(item.itemType)) {

@@ -100,6 +100,7 @@ import static com.android.launcher3.pageindicators.PaginationArrow.FULLY_OPAQUE;
 import static com.android.launcher3.popup.SystemShortcut.ADD_TO_HOME_SCREEN;
 import static com.android.launcher3.popup.SystemShortcut.APP_INFO;
 import static com.android.launcher3.popup.SystemShortcut.INSTALL;
+import static com.android.launcher3.popup.SystemShortcut.MAKE_FOLDER_WIDGET;
 import static com.android.launcher3.popup.SystemShortcut.REMOVE;
 import static com.android.launcher3.popup.SystemShortcut.RENAME_APP;
 import static com.android.launcher3.popup.SystemShortcut.UNINSTALL;
@@ -2024,6 +2025,27 @@ public class Launcher extends StatefulActivity<LauncherState>
         return newFolder;
     }
 
+    /** Converts an existing closed folder in place into the always-open, live-resizable widget. */
+    public FolderIcon convertFolderToWidget(FolderInfo folderInfo, View originalFolderIconView) {
+        CellLayout layout = mWorkspace.getParentCellLayoutForView(originalFolderIconView);
+        if (layout == null) {
+            return null;
+        }
+
+        layout.removeView(originalFolderIconView);
+
+        folderInfo.itemType = LauncherSettings.Favorites.ITEM_TYPE_FOLDER_WIDGET;
+        folderInfo.spanX = 2;
+        folderInfo.spanY = 2;
+        getModelWriter().updateItemInDatabase(folderInfo);
+
+        FolderIcon widgetIcon = (FolderIcon) mItemInflater.inflateItem(folderInfo, layout);
+        mWorkspace.addInScreen(widgetIcon, folderInfo);
+        CellLayout parent = mWorkspace.getParentCellLayoutForView(widgetIcon);
+        parent.getShortcutsAndWidgets().measureChild(widgetIcon);
+        return widgetIcon;
+    }
+
     @Override
     public Rect getFolderBoundingBox() {
         // We need to bound the folder to the currently visible workspace area
@@ -3075,7 +3097,8 @@ public class Launcher extends StatefulActivity<LauncherState>
     public Stream<SystemShortcut.Factory> getSupportedShortcuts(ItemInfo itemInfo) {
         int container = itemInfo.container;
         if (container == CONTAINER_DESKTOP || container == CONTAINER_HOTSEAT) {
-            return Stream.of(APP_INFO, RENAME_APP, WIDGETS, INSTALL, REMOVE, UNINSTALL);
+            return Stream.of(APP_INFO, RENAME_APP, WIDGETS, MAKE_FOLDER_WIDGET, INSTALL, REMOVE,
+                    UNINSTALL);
         } else if (container == CONTAINER_ALL_APPS || container == CONTAINER_ALL_APPS_PREDICTION) {
             // TODO(b/444744861): Update private space apps to have its own container.
             boolean isPinnable = itemInfo instanceof ItemInfoWithIcon info
