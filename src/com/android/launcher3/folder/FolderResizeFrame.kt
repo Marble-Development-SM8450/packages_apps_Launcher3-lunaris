@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2026 The Lunaris AOSP Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,4 +34,100 @@ interface ResizableGridHost {
 
     fun onLiveSpanChanged(spanX: Int, spanY: Int)
     fun onSpanCommitted(spanX: Int, spanY: Int)
+}
+
+class FolderResizeFrame
+@JvmOverloads
+constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
+    View(context, attrs, defStyleAttr) {
+
+    private lateinit var host: ResizableGridHost
+    private val launcher: Launcher = Launcher.getLauncher(context)
+
+    private var xDown = 0
+    private var yDown = 0
+    private var runningHInc = 0
+    private var runningVInc = 0
+
+    private var deltaXAddOn = 0
+    private var deltaYAddOn = 0
+
+    fun attachTo(gridHost: ResizableGridHost) {
+        host = gridHost
+        runningHInc = 0
+        runningVInc = 0
+        deltaXAddOn = 0
+        deltaYAddOn = 0
+    }
+
+    override fun onTouchEvent(ev: MotionEvent): Boolean {
+        val x = ev.rawX.toInt()
+        val y = ev.rawY.toInt()
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                xDown = x
+                yDown = y
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                stepResize(deltaX = x - xDown, deltaY = y - yDown, commit = false)
+                return true
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                stepResize(deltaX = x - xDown, deltaY = y - yDown, commit = true)
+                val (xThreshold, yThreshold) = cellThresholds()
+                deltaXAddOn = runningHInc * xThreshold
+                deltaYAddOn = runningVInc * yThreshold
+                runningHInc = 0
+                runningVInc = 0
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun cellThresholds(): Pair<Int, Int> {
+        val dp = launcher.deviceProfile
+        val xThreshold =
+            host.cellLayout.cellWidth + dp.workspaceIconProfile.cellLayoutBorderSpacePx.x
+        val yThreshold =
+            host.cellLayout.cellHeight + dp.workspaceIconProfile.cellLayoutBorderSpacePx.y
+        return xThreshold to yThreshold
+    }
+
+    private fun stepResize(deltaX: Int, deltaY: Int, commit: Boolean) {
+        val (xThreshold, yThreshold) = cellThresholds()
+        val hSpanInc = getSpanIncrement((deltaX + deltaXAddOn).toFloat() / xThreshold - runningHInc)
+        val vSpanInc = getSpanIncrement((deltaY + deltaYAddOn).toFloat() / yThreshold - runningVInc)
+        if (!commit && hSpanInc == 0 && vSpanInc == 0) return
+
+        val lp = host.layoutParamsForResize
+        val newSpanX = Utilities.boundToRange(lp.cellHSpan + hSpanInc, host.minHSpan, host.maxHSpan)
+        val newSpanY = Utilities.boundToRange(lp.cellVSpan + vSpanInc, host.minVSpan, host.maxVSpan)
+        if (newSpanX == lp.cellHSpan && newSpanY == lp.cellVSpan && !commit) return
+
+        val fits = host.cellLayout.createAreaForResizeFromOutsidePackage(
+            lp.cellX, lp.cellY, newSpanX, newSpanY,
+            /* dragView = */ null, /* direction = */ intArrayOf(0, 0), /* commit = */ commit,
+        )
+        if (!fits && !commit) return
+
+        runningHInc += hSpanInc
+        runningVInc += vSpanInc
+        lp.cellHSpan = newSpanX
+        lp.cellVSpan = newSpanY
+
+        if (commit) {
+            host.onSpanCommitted(newSpanX, newSpanY)
+        } else {
+            host.onLiveSpanChanged(newSpanX, newSpanY)
+        }
+        host.cellLayout.requestLayout()
+    }
+
+    private fun getSpanIncrement(deltaFrac: Float): Int = when {
+        deltaFrac >= 1f -> Math.floor(deltaFrac.toDouble()).toInt()
+        deltaFrac <= -1f -> Math.ceil(deltaFrac.toDouble()).toInt()
+        else -> 0
+    }
 }

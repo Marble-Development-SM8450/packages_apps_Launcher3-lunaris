@@ -40,7 +40,8 @@ constructor(
     lifeCycle: DaggerSingletonTracker,
 ) : PopupDataRepository {
     private val widgetManagerHelper = WidgetManagerHelper(context)
-    private val folderSystemShortcuts = listOf(popupDataSource.removePopupData)
+    private val folderSystemShortcuts =
+        listOf(popupDataSource.removePopupData, popupDataSource.makeFolderWidgetPopupData)
     private val appPairSystemShortcuts = listOf(popupDataSource.removePopupData)
     private val widgetSystemShortcuts = listOf(popupDataSource.removePopupData)
     private val widgetWithSettingsSystemShortcuts =

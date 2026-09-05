@@ -24,6 +24,7 @@ import com.android.launcher3.AbstractFloatingView
 import com.android.launcher3.AbstractFloatingViewHelper
 import com.android.launcher3.DropTargetHandler
 import com.android.launcher3.Flags
+import com.android.launcher3.Launcher
 import com.android.launcher3.LauncherConstants
 import com.android.launcher3.R
 import com.android.launcher3.SecondaryDropTarget
@@ -32,6 +33,7 @@ import com.android.launcher3.accessibility.LauncherAccessibilityDelegate
 import com.android.launcher3.allapps.PrivateProfileManager
 import com.android.launcher3.dagger.LauncherAppSingleton
 import com.android.launcher3.logging.StatsLogManager.LauncherEvent
+import com.android.launcher3.model.data.FolderInfo
 import com.android.launcher3.model.data.ItemInfo
 import com.android.launcher3.model.data.WorkspaceItemInfo
 import com.android.launcher3.popup.SystemShortcut.BubbleActivityStarter
@@ -64,6 +66,25 @@ class PopupDataSource @Inject constructor() {
             labelResId = R.string.remove_drop_target_label,
             popupAction = handleRemove,
             category = PopupCategory.SYSTEM_SHORTCUT_FIXED,
+        )
+
+    // Handles action from tapping "make widget" shortcut on a folder.
+    private val handleMakeFolderWidget =
+        { activityContext: ActivityContext, itemInfo: ItemInfo, view: View ->
+            AbstractFloatingView.closeAllOpenViews(activityContext)
+            val launcher = activityContext as? Launcher
+            if (launcher != null && itemInfo is FolderInfo) {
+                launcher.convertFolderToWidget(itemInfo, view)
+            }
+        }
+
+    // Popup data for the "make widget" folder shortcut.
+    val makeFolderWidgetPopupData =
+        PopupData(
+            iconResId = R.drawable.ic_widget,
+            labelResId = R.string.make_folder_widget,
+            popupAction = handleMakeFolderWidget,
+            category = PopupCategory.SYSTEM_SHORTCUT,
         )
 
     private val handleAddToHomeScreenFromAllApps =
