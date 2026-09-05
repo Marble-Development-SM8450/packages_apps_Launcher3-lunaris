@@ -274,6 +274,10 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
         return icon;
     }
 
+    public boolean isWidgetMode() {
+        return mIsWidgetMode;
+    }
+
     public boolean showResizeFrameIfWidgetMode() {
         if (!mIsWidgetMode || mFolderGridView == null) return false;
         if (mResizeFrame == null) {
@@ -856,6 +860,10 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
 
     @Override
     public void getWorkspaceVisualDragBounds(Rect bounds) {
+        if (mIsWidgetMode) {
+            bounds.set(0, 0, getWidth(), getHeight());
+            return;
+        }
         getPreviewBounds(bounds);
     }
 

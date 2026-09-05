@@ -134,7 +134,12 @@ public class ItemClickHandler {
      * @param v The view that was clicked. Must be an instance of {@link FolderIcon}.
      */
     private static void onClickFolderIcon(View v) {
-        Folder folder = ((FolderIcon) v).getFolder();
+        FolderIcon folderIcon = (FolderIcon) v;
+        if (folderIcon.isWidgetMode()) {
+            // Widget-mode folders are always open on the home screen; there's nothing to open.
+            return;
+        }
+        Folder folder = folderIcon.getFolder();
         if (!folder.isOpen() && !folder.isDestroyed()) {
             // Open the requested folder
             folder.animateOpen();
