@@ -274,7 +274,7 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
         return icon;
     }
 
-    private boolean showResizeFrameIfWidgetMode() {
+    public boolean showResizeFrameIfWidgetMode() {
         if (!mIsWidgetMode || mFolderGridView == null) return false;
         if (mResizeFrame == null) {
             mResizeFrame = (FolderResizeFrame) LayoutInflater.from(getContext())
@@ -783,6 +783,11 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
         if (mIsWidgetMode && showResizeFrameIfWidgetMode()) {
             return true;
         }
+        Launcher launcher = Launcher.getLauncher(mActivity.asContext());
+        if (launcher != null) {
+            launcher.getPopupControllerForHomeScreenItems().show(this);
+            return true;
+        }
         return super.performLongClick();
     }
 
@@ -923,10 +928,10 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
         @Override public int getMinHSpan() { return 1; }
         @Override public int getMinVSpan() { return 1; }
         @Override public int getMaxHSpan() {
-            return mIcon.mActivity.getDeviceProfile().getFolderProfile().getNumColumns();
+            return getCellLayout().getCountX() - mLp.getCellX();
         }
         @Override public int getMaxVSpan() {
-            return mIcon.mActivity.getDeviceProfile().getFolderProfile().getNumRows();
+            return getCellLayout().getCountY() - mLp.getCellY();
         }
 
         @Override public void onLiveSpanChanged(int spanX, int spanY) {

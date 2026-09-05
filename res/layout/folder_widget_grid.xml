@@ -19,5 +19,6 @@
     android:id="@+id/folder_widget_grid"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/round_rect_folder"
     android:clipToPadding="false"
     android:clipChildren="false" />

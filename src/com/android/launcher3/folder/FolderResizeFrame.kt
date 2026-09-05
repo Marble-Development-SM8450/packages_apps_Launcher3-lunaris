@@ -16,6 +16,7 @@
 package com.android.launcher3.folder
 
 import android.content.Context
+import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -23,6 +24,7 @@ import com.android.launcher3.CellLayout
 import com.android.launcher3.Launcher
 import com.android.launcher3.Utilities
 import com.android.launcher3.celllayout.CellLayoutLayoutParams
+import com.android.launcher3.views.BaseDragLayer
 
 interface ResizableGridHost {
     val cellLayout: CellLayout
@@ -58,6 +60,26 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
         runningVInc = 0
         deltaXAddOn = 0
         deltaYAddOn = 0
+        updatePosition()
+    }
+
+    private fun updatePosition() {
+        val lp = host.layoutParamsForResize
+        val cellRect = Rect()
+        host.cellLayout.cellToRect(lp.cellX, lp.cellY, lp.cellHSpan, lp.cellVSpan, cellRect)
+
+        val dragLayerRect = Rect()
+        launcher.dragLayer.getDescendantRectRelativeToSelf(host.cellLayout, dragLayerRect)
+
+        val cornerX = dragLayerRect.left + cellRect.right
+        val cornerY = dragLayerRect.top + cellRect.bottom
+
+        val frameLp = layoutParams as BaseDragLayer.LayoutParams
+        frameLp.customPosition = true
+        frameLp.x = cornerX - frameLp.width / 2
+        frameLp.y = cornerY - frameLp.height / 2
+        layoutParams = frameLp
+        requestLayout()
     }
 
     override fun onTouchEvent(ev: MotionEvent): Boolean {
@@ -123,6 +145,7 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
             host.onLiveSpanChanged(newSpanX, newSpanY)
         }
         host.cellLayout.requestLayout()
+        updatePosition()
     }
 
     private fun getSpanIncrement(deltaFrac: Float): Int = when {

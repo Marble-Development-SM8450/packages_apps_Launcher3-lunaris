@@ -2043,6 +2043,7 @@ public class Launcher extends StatefulActivity<LauncherState>
         mWorkspace.addInScreen(widgetIcon, folderInfo);
         CellLayout parent = mWorkspace.getParentCellLayoutForView(widgetIcon);
         parent.getShortcutsAndWidgets().measureChild(widgetIcon);
+        widgetIcon.post(widgetIcon::showResizeFrameIfWidgetMode);
         return widgetIcon;
     }
 
