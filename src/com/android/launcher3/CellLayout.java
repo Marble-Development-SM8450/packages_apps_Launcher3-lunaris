@@ -1560,6 +1560,15 @@ public class CellLayout extends ViewGroup {
         }
     }
 
+    /**
+     * Public wrapper around {@link #createAreaForResize} for callers outside this package
+     * (e.g. FolderResizeFrame, in com.android.launcher3.folder).
+     */
+    public boolean createAreaForResizeFromOutsidePackage(int cellX, int cellY, int spanX,
+            int spanY, View dragView, int[] direction, boolean commit) {
+        return createAreaForResize(cellX, cellY, spanX, spanY, dragView, direction, commit);
+    }
+
     boolean createAreaForResize(int cellX, int cellY, int spanX, int spanY,
             View dragView, int[] direction, boolean commit) {
         int[] pixelXY = new int[2];

@@ -27,6 +27,7 @@ import com.android.launcher3.CellLayout;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
 import com.android.launcher3.Reorderable;
+import com.android.launcher3.ShortcutAndWidgetContainer;
 import com.android.launcher3.apppairs.AppPairIcon;
 import com.android.launcher3.celllayout.CellLayoutLayoutParams;
 import com.android.launcher3.model.data.AppPairInfo;
@@ -153,7 +154,7 @@ public class FolderGridView extends CellLayout {
                 regionToCenterPoint(oldPos.x, oldPos.y, 1, 1, oldCenter);
                 regionToCenterPoint(newPos.x, newPos.y, 1, 1, newCenter);
                 lp.setCellXY(newPos);
-
+                //noinspection unchecked
                 FolderReflowSpring.INSTANCE.reflowTo((View & Reorderable) v,
                         (float) (oldCenter[0] - newCenter[0]),
                         (float) (oldCenter[1] - newCenter[1]),
